@@ -469,14 +469,5 @@
   ctx.fillRect(0, 0, SIZE, SIZE);
 
 </script>
-
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js")
-      .then(() => console.log("Service Worker registrado"))
-      .catch(err => console.log("Erro:", err));
-  }
-</script>
-
 </body>
 </html>
