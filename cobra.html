@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+                 maximum-scale=1.0, user-scalable=no">
+  <title>🐍 Cobrinha</title>
+  <style>
+
+    /* ── Reset: zera margens padrão do navegador ── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ── Fundo da página ── */
+    body {
+      background: #0f172a;        /* azul muito escuro */
+      display: flex;              /* flex = organiza em coluna */
+      flex-direction: column;
+      align-items: center;        /* centraliza na horizontal */
+      justify-content: center;    /* centraliza na vertical */
+      min-height: 100vh;          /* ocupa a tela toda */
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: white;
+      padding: 16px;
+      user-select: none;          /* impede selecionar texto por acidente */
+      -webkit-user-select: none;
+    }
+
+    /* ── Título ── */
+    h1 {
+      font-size: 28px;
+      color: #f7df1e;             /* amarelo — cor oficial do JavaScript */
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+
+    /* ── Área de pontuação ── */
+    #placar-wrap {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      color: #94a3b8;             /* cinza claro */
+    }
+
+    /* Os números ficam brancos e maiores */
+    #placar-wrap span {
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    /* ── Moldura do canvas (área do jogo) ── */
+    canvas {
+      display: block;
+      border: 3px solid #f7df1e;  /* borda amarela */
+      border-radius: 10px;
+      touch-action: none;         /* impede rolar a página ao jogar */
+    }
+
+    /* ── Posicionamento do canvas e do overlay ── */
+    #canvas-wrap {
+      position: relative;         /* necessário para o overlay ficar por cima */
+    }
+
+    /* ── Tela inicial e tela de fim de jogo ── */
+    #overlay {
+      position: absolute;         /* fica em cima do canvas */
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.88);  /* fundo semi-transparente */
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    #overlay h2 {
+      font-size: 24px;
+      color: #f7df1e;
+    }
+
+    #overlay p {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    /* ── Botão de jogar ── */
+    #btn-jogar {
+      padding: 14px 36px;
+      background: #f7df1e;
+      color: #0f172a;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* Efeito de pressionar o botão */
+    #btn-jogar:active {
+      transform: scale(0.96);
+    }
+
+    /* ── Controles de toque (os 4 botões de direção) ── */
+    #controles {
+      display: grid;
+      grid-template-columns: repeat(3, 64px);  /* 3 colunas de 64px */
+      grid-template-rows: repeat(2, 64px);      /* 2 linhas de 64px */
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    /* Cada botão de direção */
+    .btn-dir {
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      font-size: 26px;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent; /* sem flash ao tocar */
+    }
+
+    /* Efeito ao pressionar */
+    .btn-dir:active {
+      background: #f7df1e;
+      color: #0f172a;
+    }
+
+    /* Posicionamento dos botões no grid */
+    #bc { grid-column: 2; grid-row: 1; }  /* cima — coluna do meio, linha 1 */
+    #be { grid-column: 1; grid-row: 2; }  /* esquerda */
+    #bb { grid-column: 2; grid-row: 2; }  /* baixo */
+    #bd { grid-column: 3; grid-row: 2; }  /* direita */
+
+    /* Dica no rodapé */
+    #dica {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #475569;
+    }
+
+  </style>
+</head>
+<body>
+
+  <h1>🐍 COBRINHA</h1>
+
+  <!-- Placar -->
+  <div id="placar-wrap">
+    <div>Pontos: <span id="pts">0</span></div>
+    <div>Recorde: <span id="rec">0</span></div>
+  </div>
+
+  <!-- Área do jogo -->
+  <div id="canvas-wrap">
+
+    <!-- Canvas = tela onde o jogo é desenhado -->
+    <canvas id="tela"></canvas>
+
+    <!-- Overlay = tela inicial e tela de fim de jogo -->
+    <div id="overlay">
+      <h2>🐍 Cobrinha</h2>
+      <p>Use os botões ou deslize o dedo</p>
+      <button id="btn-jogar">▶ JOGAR</button>
+    </div>
+
+  </div>
+
+  <!-- Botões de direção para celular -->
+  <div id="controles">
+    <div class="btn-dir" id="bc">⬆</div>
+    <div class="btn-dir" id="be">⬅</div>
+    <div class="btn-dir" id="bb">⬇</div>
+    <div class="btn-dir" id="bd">➡</div>
+  </div>
+
+  <p id="dica">💡 No PC: use as setas do teclado</p>
+
+<script>
+  // ─────────────────────────────────────────────
+  // PEGANDO OS ELEMENTOS HTML PELO ID
+  // ─────────────────────────────────────────────
+  const canvas  = document.getElementById("tela");     // a tela do jogo
+  const ctx     = canvas.getContext("2d");             // o pincel para desenhar
+  const overlay = document.getElementById("overlay"); // tela inicial/fim
+  const ptsEl   = document.getElementById("pts");     // número de pontos
+  const recEl   = document.getElementById("rec");     // recorde
+
+  // ─────────────────────────────────────────────
+  // TAMANHO DO JOGO (responsivo — se adapta ao celular)
+  // ─────────────────────────────────────────────
+  const MAX  = Math.min(window.innerWidth - 32, 320); // largura máxima
+  const GRID = 20;                                     // tamanho de cada quadrado
+  const COLS = Math.floor(MAX / GRID);                 // quantas colunas cabem
+  const SIZE = COLS * GRID;                            // tamanho total da tela
+
+  canvas.width  = SIZE;
+  canvas.height = SIZE;
+
+  // ─────────────────────────────────────────────
+  // VARIÁVEIS DO JOGO
+  // ─────────────────────────────────────────────
+  let cobra;    // array com as partes da cobra [ {x,y}, {x,y}, ... ]
+  let dir;      // direção atual { x: 1, y: 0 } = direita
+  let prox;     // próxima direção (guardada até o próximo frame)
+  let comida;   // posição da comida { x, y }
+  let pts;      // pontuação atual
+  let recorde = 0; // recorde (persiste entre partidas)
+  let loop;     // referência ao setInterval (para poder parar)
+
+  // ─────────────────────────────────────────────
+  // FUNÇÃO: INICIAR O JOGO
+  // Chamada quando o jogador clica em "Jogar"
+  // ─────────────────────────────────────────────
+  function iniciar() {
+    const meio = Math.floor(COLS / 2); // posição central da grade
+
+    // Cobra começa com 3 partes no meio da tela, apontando para a direita
+    cobra = [
+      { x: meio,     y: meio },  // cabeça
+      { x: meio - 1, y: meio },  // corpo
+      { x: meio - 2, y: meio }   // cauda
+    ];
+
+    dir  = { x: 1, y: 0 };  // começa indo para a direita
+    prox = { x: 1, y: 0 };  // próxima direção = mesma
+
+    pts = 0;
+    ptsEl.textContent = 0;
+
+    overlay.style.display = "none"; // esconde a tela inicial
+
+    novaComida(); // gera a primeira comida
+
+    if (loop) clearInterval(loop); // para o loop anterior se existir
+    loop = setInterval(tick, 140); // chama tick() a cada 140ms
+  }
+
+  // ─────────────────────────────────────────────
+  // FUNÇÃO: GERAR NOVA COMIDA
+  // Coloca a comida em uma posição aleatória
+  // que não coincida com a cobra
+  // ─────────────────────────────────────────────
+  function novaComida() {
+    let pos;
+    do {
+      pos = {
+        x: Math.floor(Math.random() * COLS),
+        y: Math.floor(Math.random() * COLS)
+      };
+      // Repete se a posição gerada estiver dentro da cobra
+    } while (cobra.some(p => p.x === pos.x && p.y === pos.y));
+
+    comida = pos;
+  }
+
+  // ─────────────────────────────────────────────
+  // FUNÇÃO: TICK (executada a cada 140ms)
+  // Aqui acontece toda a lógica do jogo
+  // ─────────────────────────────────────────────
+  function tick() {
+    // Aplica a próxima direção
+    dir = { ...prox };
+
+    // Calcula onde a cabeça vai estar
+    const cab = {
+      x: cobra[0].x + dir.x,
+      y: cobra[0].y + dir.y
+    };
+
+    // Verifica se bateu na parede
+    if (cab.x < 0 || cab.x >= COLS || cab.y < 0 || cab.y >= COLS) {
+      return fim(); // chama o fim do jogo
+    }
+
+    // Verifica se bateu no próprio corpo
+    if (cobra.some(p => p.x === cab.x && p.y === cab.y)) {
+      return fim();
+    }
+
+    // Adiciona a nova cabeça no início do array
+    cobra.unshift(cab);
+
+    // Verifica se comeu a comida
+    if (cab.x === comida.x && cab.y === comida.y) {
+      pts += 10;
+      ptsEl.textContent = pts;
+
+      // Atualiza o recorde se necessário
+      if (pts > recorde) {
+        recorde = pts;
+        recEl.textContent = recorde;
+      }
+
+      novaComida(); // gera nova comida
+      // Não remove a cauda — a cobra cresce!
+
+    } else {
+      cobra.pop(); // remove a cauda (cobra se move sem crescer)
+    }
+
+    desenhar(); // redesenha tudo
+  }
+
+  // ─────────────────────────────────────────────
+  // FUNÇÃO: DESENHAR
+  // Redesenha toda a tela a cada frame
+  // ─────────────────────────────────────────────
+  function desenhar() {
+
+    // Limpa a tela (fundo escuro)
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(0, 0, SIZE, SIZE);
+
+    // Desenha a grade (linhas sutis de fundo)
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= COLS; i++) {
+      // Linhas verticais
+      ctx.beginPath();
+      ctx.moveTo(i * GRID, 0);
+      ctx.lineTo(i * GRID, SIZE);
+      ctx.stroke();
+      // Linhas horizontais
+      ctx.beginPath();
+      ctx.moveTo(0, i * GRID);
+      ctx.lineTo(SIZE, i * GRID);
+      ctx.stroke();
+    }
+
+    // Desenha a comida (círculo vermelho com brilho)
+    const cx = comida.x * GRID + GRID / 2;
+    const cy = comida.y * GRID + GRID / 2;
+    ctx.fillStyle = "#ef4444"; // vermelho
+    ctx.beginPath();
+    ctx.arc(cx, cy, GRID / 2 - 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Brilho branco na comida
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
+    ctx.beginPath();
+    ctx.arc(cx - 2, cy - 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Desenha cada parte da cobra
+    cobra.forEach((parte, indice) => {
+      const x = parte.x * GRID + 1;
+      const y = parte.y * GRID + 1;
+      const w = GRID - 2;
+
+      if (indice === 0) {
+        // Cabeça — amarela
+        ctx.fillStyle = "#f7df1e";
+      } else {
+        // Corpo — gradiente do verde ao verde escuro
+        const t = indice / cobra.length;
+        ctx.fillStyle = `hsl(${140 - t * 40}, 70%, ${45 - t * 10}%)`;
+      }
+
+      // Desenha retângulo com cantos arredondados
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, w, 4);
+      ctx.fill();
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // FUNÇÃO: FIM DE JOGO
+  // ─────────────────────────────────────────────
+  function fim() {
+    clearInterval(loop); // para o loop do jogo
+
+    // Atualiza o overlay para mostrar "Fim de jogo"
+    overlay.querySelector("h2").textContent = "💀 Fim de jogo!";
+    overlay.querySelector("p").textContent  = `Você fez ${pts} pontos`;
+    overlay.querySelector("button").textContent = "🔄 Jogar de novo";
+
+    overlay.style.display = "flex"; // mostra a tela de fim
+  }
+
+  // ─────────────────────────────────────────────
+  // FUNÇÃO: MUDAR DIREÇÃO
+  // Evita que a cobra vire 180° (volte sobre si mesma)
+  // ─────────────────────────────────────────────
+  function mover(nx, ny) {
+    // Se a nova direção for exatamente oposta à atual, ignora
+    if (nx === -dir.x && ny === -dir.y) return;
+    prox = { x: nx, y: ny };
+  }
+
+  // ─────────────────────────────────────────────
+  // CONTROLES: TECLADO (para PC)
+  // ─────────────────────────────────────────────
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp")    { e.preventDefault(); mover(0, -1); }
+    if (e.key === "ArrowDown")  { e.preventDefault(); mover(0,  1); }
+    if (e.key === "ArrowLeft")  { e.preventDefault(); mover(-1, 0); }
+    if (e.key === "ArrowRight") { e.preventDefault(); mover(1,  0); }
+  });
+
+  // ─────────────────────────────────────────────
+  // CONTROLES: BOTÕES DE TOQUE (para celular)
+  // Usa touchstart (mais rápido que click no celular)
+  // ─────────────────────────────────────────────
+  const addBtn = (id, nx, ny) => {
+    const el = document.getElementById(id);
+    el.addEventListener("touchstart", e => {
+      e.preventDefault();
+      mover(nx, ny);
+    }, { passive: false });
+    el.addEventListener("click", () => mover(nx, ny));
+  };
+
+  addBtn("bc", 0, -1);  // cima
+  addBtn("bb", 0,  1);  // baixo
+  addBtn("be", -1, 0);  // esquerda
+  addBtn("bd", 1,  0);  // direita
+
+  // ─────────────────────────────────────────────
+  // CONTROLES: SWIPE (deslizar o dedo na tela)
+  // ─────────────────────────────────────────────
+  let touchX = 0;
+  let touchY = 0;
+
+  // Registra onde o dedo tocou
+  canvas.addEventListener("touchstart", e => {
+    touchX = e.touches[0].clientX;
+    touchY = e.touches[0].clientY;
+    e.preventDefault();
+  }, { passive: false });
+
+  // Quando o dedo levanta, calcula a direção do swipe
+  canvas.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - touchX; // distância horizontal
+    const dy = e.changedTouches[0].clientY - touchY; // distância vertical
+
+    // Qual movimento foi maior — horizontal ou vertical?
+    if (Math.abs(dx) > Math.abs(dy)) {
+      mover(dx > 0 ? 1 : -1, 0); // direita ou esquerda
+    } else {
+      mover(0, dy > 0 ? 1 : -1); // baixo ou cima
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  // ─────────────────────────────────────────────
+  // BOTÃO JOGAR
+  // ─────────────────────────────────────────────
+  document.getElementById("btn-jogar").addEventListener("click", iniciar);
+
+  // Fundo inicial enquanto o overlay está visível
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+</script>
+</body>
+</html>
