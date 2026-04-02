@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seasonal Themes</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .theme { display: none; }
+        /* Different themes styles */
+        .spring { background-color: #a8e6cf; color: #4a9e38; }
+        .summer { background-color: #ffccbc; color: #e65100; }
+        .autumn { background-color: #ffd54f; color: #bf360c; }
+        .winter { background-color: #bbdefb; color: #0d47a1; }
+        /* Add more styles for other themes */
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Seasonal Themes Game!</h1>
+    <div id="theme-container">
+        <div id="spring" class="theme spring">Spring Theme</div>
+        <div id="summer" class="theme summer">Summer Theme</div>
+        <div id="autumn" class="theme autumn">Autumn Theme</div>
+        <div id="winter" class="theme winter">Winter Theme</div>
+        <!-- Add more seasonal themes here -->
+    </div>
+    <script>
+        // Function to set up the game environment
+        function setupGame() {
+            let isReturningPlayer = localStorage.getItem('isReturningPlayer');
+            if (isReturningPlayer) {
+                alert('Welcome back to the game!');
+            } else {
+                alert('Welcome to the game!');
+                localStorage.setItem('isReturningPlayer', 'true');
+            }
+            loadThemes();
+        }
+
+        // Function to load the appropriate theme
+        function loadThemes() {
+            const themes = ['spring', 'summer', 'autumn', 'winter'];
+            const currentTheme = themes[Math.floor(Math.random() * themes.length)];
+            document.getElementById(currentTheme).style.display = 'block';
+        }
+
+        // Call setupGame when the page loads
+        window.onload = setupGame;
+    </script>
+    <script>
+        // Check for service worker support
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js').then(reg => {
+                console.log('Service Worker registered!', reg);
+            }).catch(err => {
+                console.error('Service Worker registration failed:', err);
+            });
+        }
+    </script>
+</body>
+</html>
