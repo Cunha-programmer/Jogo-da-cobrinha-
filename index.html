@@ -1,16 +1,368 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Cobrinha</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>🐍 Cobrinha</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;font-family:'Segoe UI',Arial,sans-serif;color:white;user-select:none;-webkit-user-select:none;overflow-x:hidden;padding-bottom:80px;}
+    .tela{display:none;width:100%;max-width:440px;flex-direction:column;align-items:center;}
+    .tela.ativa{display:flex;}
+    #nav-abas{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0f172a;border-top:2px solid #1e293b;z-index:100;}
+    .aba{flex:1;padding:10px 0;text-align:center;font-size:11px;color:#475569;cursor:pointer;}
+    .aba span{display:block;font-size:20px;}
+    .aba.ativa{color:#f7df1e;}
+    #tela-inicio{justify-content:center;min-height:100vh;padding:24px 16px;gap:0;}
+    #tela-inicio h1{font-size:36px;color:#f7df1e;letter-spacing:3px;margin-bottom:4px;}
+    #tela-inicio .tagline{color:#64748b;font-size:12px;margin-bottom:6px;}
+    #creditos-inicio{font-size:11px;color:#334155;margin-bottom:20px;}
+    #creditos-inicio span{color:#f7df1e;}
+    .input-nome{background:#1e293b;border:2px solid #334155;border-radius:10px;padding:12px 16px;font-size:16px;color:white;width:100%;max-width:280px;margin-bottom:16px;text-align:center;outline:none;}
+    .input-nome:focus{border-color:#f7df1e;}
+    .btn-principal{padding:14px 40px;background:#f7df1e;color:#0f172a;border:none;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer;transition:transform .1s;}
+    .btn-principal:active{transform:scale(.95);}
+    #tela-jogo{padding:8px 8px 0;}
+    #info-topo{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:440px;padding:4px 4px 8px;}
+    #info-topo .bloco{text-align:center;}
+    #info-topo .label{font-size:10px;color:#64748b;text-transform:uppercase;}
+    #info-topo .valor{font-size:17px;font-weight:bold;color:white;}
+    #info-topo .valor.amarelo{color:#f7df1e;}
+    #nivel-bar-wrap{width:100%;max-width:440px;padding:0 4px 6px;}
+    #nivel-label{font-size:10px;color:#64748b;margin-bottom:3px;}
+    #nivel-bar-bg{background:#1e293b;border-radius:99px;height:6px;overflow:hidden;}
+    #nivel-bar{height:100%;background:#f7df1e;border-radius:99px;transition:width .3s;width:0%;}
+    #canvas-wrap{position:relative;}
+    canvas{display:block;border:3px solid #f7df1e;border-radius:10px;touch-action:none;}
+    #overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.9);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+    #overlay h2{font-size:26px;color:#f7df1e;}
+    #overlay p{font-size:13px;color:#94a3b8;}
+    #overlay .pts-finais{font-size:28px;font-weight:bold;color:white;}
+    #btn-vida-extra{padding:12px 28px;background:#ef4444;color:white;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;animation:pulsar 1s infinite;}
+    @keyframes pulsar{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    #btn-vida-extra.escondido{display:none;}
+    #countdown{font-size:72px;font-weight:bold;color:#f7df1e;animation:zoom-in .6s ease;}
+    @keyframes zoom-in{from{transform:scale(2);opacity:0}to{transform:scale(1);opacity:1}}
+    #btn-pausar{position:absolute;top:6px;right:6px;background:rgba(30,41,59,.8);border:1px solid #334155;border-radius:8px;font-size:18px;padding:4px 10px;color:white;cursor:pointer;z-index:10;}
+    #controles-wrap{margin-top:10px;width:100%;max-width:440px;display:flex;justify-content:center;}
+    #controles{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,64px);gap:6px;}
+    .btn-dir{background:#1e293b;border:2px solid #334155;border-radius:12px;font-size:26px;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+    .btn-dir:active,.btn-dir.pressionado{background:#f7df1e;color:#0f172a;}
+    #bc{grid-column:2;grid-row:1;}#be{grid-column:1;grid-row:2;}
+    #bb{grid-column:2;grid-row:2;}#bd{grid-column:3;grid-row:2;}
+    #joystick-wrap{width:160px;height:160px;position:relative;margin-top:10px;display:none;}
+    #joystick-base{width:160px;height:160px;border-radius:50%;background:rgba(30,41,59,.7);border:2px solid #334155;position:absolute;}
+    #joystick-thumb{width:60px;height:60px;border-radius:50%;background:#f7df1e;position:absolute;top:50px;left:50px;}
+    #dica{margin-top:8px;font-size:11px;color:#334155;}
+    #tela-loja{padding:16px;}
+    #tela-loja h2{font-size:22px;color:#f7df1e;margin-bottom:4px;}
+    #moedas-loja{font-size:14px;color:#fbbf24;margin-bottom:16px;}
+    .secao-loja{width:100%;margin-bottom:20px;}
+    .secao-loja h3{font-size:14px;color:#64748b;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid #1e293b;padding-bottom:4px;}
+    .grade-loja{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+    .item-loja{background:#1e293b;border:2px solid #334155;border-radius:12px;padding:12px;text-align:center;cursor:pointer;transition:border-color .2s;}
+    .item-loja.selecionado{border-color:#f7df1e;}
+    .item-loja.comprado{border-color:#22c55e;}
+    .item-loja .preview{font-size:36px;margin-bottom:6px;}
+    .item-loja .nome-item{font-size:13px;font-weight:bold;}
+    .item-loja .preco{font-size:12px;color:#fbbf24;margin-top:4px;}
+    .item-loja .status{font-size:11px;color:#22c55e;margin-top:2px;}
+    #tela-config{padding:16px;}
+    #tela-config h2{font-size:22px;color:#f7df1e;margin-bottom:20px;}
+    .config-grupo{width:100%;margin-bottom:16px;}
+    .config-grupo label{font-size:13px;color:#94a3b8;display:block;margin-bottom:6px;}
+    .config-grupo .opcoes{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn-opcao{padding:8px 16px;background:#1e293b;border:2px solid #334155;border-radius:8px;font-size:13px;color:white;cursor:pointer;}
+    .btn-opcao.ativo{border-color:#f7df1e;color:#f7df1e;}
+    .toggle-row{display:flex;justify-content:space-between;align-items:center;background:#1e293b;border-radius:10px;padding:12px 16px;margin-bottom:8px;}
+    .toggle-row span{font-size:14px;}
+    .toggle{width:44px;height:24px;border-radius:99px;background:#334155;position:relative;cursor:pointer;transition:background .2s;}
+    .toggle.on{background:#f7df1e;}
+    .toggle::after{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:3px;transition:left .2s;}
+    .toggle.on::after{left:23px;background:#0f172a;}
+    #creditos-config{margin-top:20px;padding:16px;background:#1e293b;border-radius:12px;text-align:center;width:100%;}
+    #creditos-config .titulo{font-size:11px;color:#475569;margin-bottom:6px;}
+    #creditos-config .autor{font-size:16px;font-weight:bold;color:#f7df1e;}
+    #creditos-config .versao{font-size:11px;color:#334155;margin-top:4px;}
+  </style>
 </head>
 <body>
-    <div class="overlay">
-        <h1>Jogo da Cobrinha</h1>
-        <p>Desenvolvedor: **Cunha-programmerMe**</p>
+<div id="tela-inicio" class="tela">
+  <h1>🐍 COBRINHA</h1>
+  <p class="tagline">O clássico de volta, melhor do que nunca</p>
+  <p id="creditos-inicio">Criado por <span>Cunha Programmer</span></p>
+  <input type="text" id="input-nome" class="input-nome" placeholder="Digite seu nome..." maxlength="16" autocomplete="off">
+  <button class="btn-principal" id="btn-comecar">▶ JOGAR</button>
+</div>
+
+<div id="tela-jogo" class="tela">
+  <div id="info-topo">
+    <div class="bloco"><div class="label">Jogador</div><div class="valor" id="nome-exibido">---</div></div>
+    <div class="bloco"><div class="label">Pontos</div><div class="valor amarelo" id="pts">0</div></div>
+    <div class="bloco"><div class="label">Recorde</div><div class="valor" id="rec">0</div></div>
+    <div class="bloco"><div class="label">Moedas</div><div class="valor" id="moedas-hud">🪙0</div></div>
+  </div>
+  <div id="nivel-bar-wrap">
+    <div id="nivel-label">Nível 1 — Fase 1</div>
+    <div id="nivel-bar-bg"><div id="nivel-bar"></div></div>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="tela"></canvas>
+    <button id="btn-pausar">⏸</button>
+    <div id="overlay">
+      <h2 id="ov-titulo">🐍 Cobrinha</h2>
+      <p id="ov-sub">Prepare-se...</p>
+      <div id="countdown" style="display:none"></div>
+      <div id="ov-pts-wrap" style="display:none">
+        <div style="font-size:13px;color:#94a3b8">Você fez</div>
+        <div class="pts-finais" id="ov-pts">0 pts</div>
+      </div>
+      <button id="btn-vida-extra" class="escondido">💖 USAR VIDA EXTRA</button>
+      <button id="btn-jogar" class="btn-principal">▶ JOGAR</button>
     </div>
-    <script src="script.js"></script>
+  </div>
+  <div id="controles-wrap">
+    <div id="controles">
+      <div class="btn-dir" id="bc">⬆</div>
+      <div class="btn-dir" id="be">⬅</div>
+      <div class="btn-dir" id="bb">⬇</div>
+      <div class="btn-dir" id="bd">➡</div>
+    </div>
+    <div id="joystick-wrap">
+      <div id="joystick-base"></div>
+      <div id="joystick-thumb"></div>
+    </div>
+  </div>
+  <p id="dica">💡 PC: setas do teclado | Celular: deslize ou botões</p>
+</div>
+
+<div id="tela-loja" class="tela">
+  <h2>🛒 Loja</h2>
+  <div id="moedas-loja">🪙 <span id="moedas-loja-num">0</span> moedas</div>
+  <div class="secao-loja"><h3>Skins da Cobra</h3><div class="grade-loja" id="grade-skins"></div></div>
+  <div class="secao-loja"><h3>Fundos</h3><div class="grade-loja" id="grade-fundos"></div></div>
+  <div class="secao-loja"><h3>Itens</h3><div class="grade-loja" id="grade-itens"></div></div>
+</div>
+
+<div id="tela-config" class="tela">
+  <h2>⚙️ Configurações</h2>
+  <div class="config-grupo">
+    <label>Tipo de controle</label>
+    <div class="opcoes">
+      <button class="btn-opcao ativo" data-config="controle" data-val="botoes">🎮 Botões</button>
+      <button class="btn-opcao" data-config="controle" data-val="joystick">🕹 Analógico</button>
+      <button class="btn-opcao" data-config="controle" data-val="touch">👆 Touch</button>
+    </div>
+  </div>
+  <div class="toggle-row"><span>🔊 Sons</span><div class="toggle on" id="toggle-sons"></div></div>
+  <div class="toggle-row"><span>🎵 Música</span><div class="toggle on" id="toggle-musica"></div></div>
+  <div class="toggle-row"><span>📳 Vibrar</span><div class="toggle on" id="toggle-vibrar"></div></div>
+  <div class="toggle-row"><span>🚪 Atravessar paredes</span><div class="toggle" id="toggle-paredes"></div></div>
+  <div id="creditos-config">
+    <div class="titulo">Desenvolvido por</div>
+    <div class="autor">Cunha Programmer</div>
+    <div class="versao">🐍 Cobrinha v2.0 · 2025</div>
+  </div>
+</div>
+
+<nav id="nav-abas">
+  <div class="aba ativa" data-tela="tela-jogo"><span>🎮</span>Jogo</div>
+  <div class="aba" data-tela="tela-loja"><span>🛒</span>Loja</div>
+  <div class="aba" data-tela="tela-config"><span>⚙️</span>Config</div>
+</nav>
+<script>
+const GRID=20,MAX_W=Math.min(window.innerWidth-16,420),COLS=Math.floor(MAX_W/GRID),SIZE=COLS*GRID;
+const VEL_BASE=200,VEL_MIN=80,VEL_STEP=4,PONTOS_NIVEL=60,CUSTO_VIDA_EXTRA=10;
+const SKINS=[
+  {id:'classico',nome:'Clássico',emoji:'🟡',preco:0,cabeca:'#f7df1e',corpo:(t)=>`hsl(${140-t*40},70%,${45-t*10}%)`},
+  {id:'fogo',nome:'Fogo',emoji:'🔴',preco:50,cabeca:'#ef4444',corpo:(t)=>`hsl(${20-t*10},90%,${50-t*10}%)`},
+  {id:'gelo',nome:'Gelo',emoji:'🔵',preco:50,cabeca:'#38bdf8',corpo:(t)=>`hsl(${200+t*10},80%,${55-t*10}%)`},
+  {id:'pascoa',nome:'Páscoa 🐣',emoji:'🩷',preco:30,cabeca:'#f0abfc',corpo:(t)=>`hsl(${280+t*20},70%,${60-t*5}%)`},
+  {id:'ouro',nome:'Ouro',emoji:'✨',preco:100,cabeca:'#fbbf24',corpo:(t)=>`hsl(${42-t*5},100%,${50-t*8}%)`},
+  {id:'noite',nome:'Noite',emoji:'🌙',preco:70,cabeca:'#a78bfa',corpo:(t)=>`hsl(${260-t*20},60%,${40-t*8}%)`},
+];
+const FUNDOS=[
+  {id:'classico',nome:'Clássico',emoji:'🌑',preco:0,fundo:'#0f172a',grade:'#1e293b'},
+  {id:'grama',nome:'Grama',emoji:'🌿',preco:30,fundo:'#052e16',grade:'#14532d'},
+  {id:'pascoa',nome:'Páscoa',emoji:'🐰',preco:40,fundo:'#1e1040',grade:'#2e1065'},
+  {id:'oceano',nome:'Oceano',emoji:'🌊',preco:40,fundo:'#0c1a33',grade:'#1e3a5f'},
+];
+const ITENS_LOJA=[
+  {id:'vida_extra',nome:'Vida Extra',emoji:'💖',desc:'Reviver 1x',preco:10},
+  {id:'iman',nome:'Ímã de Ouro',emoji:'🧲',desc:'+1 moeda ao comer',preco:80},
+];
+let nomeJogador='',recorde=0,moedas=0;
+let skinsCompradas=['classico'],fundosComprados=['classico'],itensComprados={};
+let skinAtual=SKINS[0],fundoAtual=FUNDOS[0];
+let config={controle:'botoes',sons:true,musica:true,vibrar:true,paredes:false};
+let cobra,dir,prox,comida,comidaOuro,loop,velocidade;
+let aguardandoInicio=true,pausado=false,emJogo=false;
+let nivel=1,nivelPts=0,vidasExtras=0,imanAtivo=false;
+let cobraAnterior,comidaAnterior,comidaOuroAnterior,pts=0;
+function salvar(){localStorage.setItem('cobra_cunha',JSON.stringify({nomeJogador,recorde,moedas,skinId:skinAtual.id,fundoId:fundoAtual.id,skinsCompradas,fundosComprados,itensComprados,config}));}
+function carregar(){try{const d=JSON.parse(localStorage.getItem('cobra_cunha')||'{}');nomeJogador=d.nomeJogador||'';recorde=d.recorde||0;moedas=d.moedas||0;skinsCompradas=d.skinsCompradas||['classico'];fundosComprados=d.fundosComprados||['classico'];itensComprados=d.itensComprados||{};skinAtual=SKINS.find(s=>s.id===d.skinId)||SKINS[0];fundoAtual=FUNDOS.find(f=>f.id===d.fundoId)||FUNDOS[0];if(d.config)Object.assign(config,d.config);}catch(e){}}
+const canvas=document.getElementById('tela'),ctx=canvas.getContext('2d');
+const overlay=document.getElementById('overlay'),ptsEl=document.getElementById('pts');
+const recEl=document.getElementById('rec'),moeEl=document.getElementById('moedas-hud');
+const nomeEl=document.getElementById('nome-exibido'),nivelLbl=document.getElementById('nivel-label');
+const nivelBar=document.getElementById('nivel-bar'),btnJogar=document.getElementById('btn-jogar');
+const btnVida=document.getElementById('btn-vida-extra'),ovTitulo=document.getElementById('ov-titulo');
+const ovSub=document.getElementById('ov-sub'),ovPtsWrap=document.getElementById('ov-pts-wrap');
+const ovPts=document.getElementById('ov-pts'),countdown=document.getElementById('countdown');
+canvas.width=SIZE;canvas.height=SIZE;
+let audioCtx=null;
+const notas={C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392,A4:440,B4:493.88,C5:523.25,G3:196,E3:164.81};
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
+function tocar(freq,tipo,dur,vol,delay){tipo=tipo||'square';dur=dur||0.1;vol=vol||0.15;delay=delay||0;if(!config.sons)return;try{const ac=getAudio(),osc=ac.createOscillator(),gain=ac.createGain();osc.connect(gain);gain.connect(ac.destination);osc.type=tipo;osc.frequency.setValueAtTime(freq,ac.currentTime+delay);gain.gain.setValueAtTime(vol,ac.currentTime+delay);gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+delay+dur);osc.start(ac.currentTime+delay);osc.stop(ac.currentTime+delay+dur+.01);}catch(e){}}
+function somComer(){tocar(440,'square',.06,.2);tocar(660,'square',.06,.2,.07);}
+function somComidaOuro(){[880,1100,1320].forEach((f,i)=>tocar(f,'sine',.08,.2,i*.06));}
+function somFrutaAparece(){tocar(330,'sine',.05,.08);}
+function somGameOver(){[440,330,220].forEach((f,i)=>tocar(f,'sawtooth',.2,.2,i*.15));}
+function somNivelUp(){[523,659,784,1047].forEach((f,i)=>tocar(f,'square',.1,.2,i*.1));}
+function somPausa(){tocar(440,'sine',.05,.1);}
+function somVidaExtra(){[660,880,1100].forEach((f,i)=>tocar(f,'sine',.1,.2,i*.1));}
+const melodia=[{f:notas.E4,d:.2},{f:notas.E4,d:.2},{f:0,d:.1},{f:notas.E4,d:.2},{f:0,d:.1},{f:notas.C4,d:.2},{f:notas.E4,d:.3},{f:notas.G4,d:.4},{f:0,d:.3},{f:notas.G3,d:.3},{f:0,d:.3},{f:notas.C4,d:.3},{f:0,d:.15},{f:notas.G3,d:.2},{f:0,d:.15},{f:notas.E3,d:.3},{f:0,d:.15},{f:notas.A4,d:.2},{f:notas.B4,d:.2},{f:notas.A4,d:.1},{f:notas.A4,d:.2},{f:notas.G3,d:.2},{f:notas.E4,d:.2},{f:notas.G4,d:.2},{f:notas.A4,d:.3},{f:notas.F4,d:.2},{f:notas.G4,d:.2},{f:notas.E4,d:.3},{f:notas.C4,d:.2},{f:notas.D4,d:.2},{f:notas.B4,d:.3}];
+let musicaTimeout=null,musicaIndex=0,musicaAtiva=false;
+function tocarMusica(){if(!config.musica||!musicaAtiva)return;const nota=melodia[musicaIndex%melodia.length];musicaIndex++;if(nota.f>0){try{const ac=audioCtx,osc=ac.createOscillator(),gain=ac.createGain();osc.connect(gain);gain.connect(ac.destination);osc.type='triangle';osc.frequency.value=nota.f;gain.gain.setValueAtTime(0.05,ac.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+(nota.d||.2));osc.start(ac.currentTime);osc.stop(ac.currentTime+(nota.d||.2)+.01);}catch(e){}}musicaTimeout=setTimeout(tocarMusica,(nota.d||.2)*1000);}
+function iniciarMusica(){if(musicaAtiva)return;musicaAtiva=true;musicaIndex=0;tocarMusica();}
+function pararMusica(){musicaAtiva=false;if(musicaTimeout)clearTimeout(musicaTimeout);}
+const telasMap={'tela-inicio':document.getElementById('tela-inicio'),'tela-jogo':document.getElementById('tela-jogo'),'tela-loja':document.getElementById('tela-loja'),'tela-config':document.getElementById('tela-config')};
+const abas=document.querySelectorAll('.aba');
+function mostrarTela(id){Object.entries(telasMap).forEach(([k,v])=>v.classList.toggle('ativa',k===id));abas.forEach(a=>a.classList.toggle('ativa',a.dataset.tela===id));if(id==='tela-loja')renderLoja();if(id==='tela-config')renderConfig();}
+abas.forEach(a=>{if(a.dataset.tela)a.addEventListener('click',()=>mostrarTela(a.dataset.tela));});
+function mostrarNav(sim){document.getElementById('nav-abas').style.display=sim?'flex':'none';}
+function atualizarHUD(){ptsEl.textContent=pts||0;recEl.textContent=recorde;moeEl.textContent='🪙'+moedas;const el=document.getElementById('moedas-loja-num');if(el)el.textContent=moedas;}
+function atualizarNivel(){nivelBar.style.width=Math.min(100,(nivelPts/PONTOS_NIVEL)*100)+'%';nivelLbl.textContent='Nível '+nivel+' — Fase '+nivel;}
+document.getElementById('btn-comecar').addEventListener('click',()=>{const val=document.getElementById('input-nome').value.trim();if(!val){document.getElementById('input-nome').focus();return;}nomeJogador=val;salvar();mostrarTela('tela-jogo');mostrarNav(true);nomeEl.textContent=nomeJogador;recEl.textContent=recorde;atualizarHUD();atualizarControles();getAudio();});
+document.getElementById('input-nome').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('btn-comecar').click();});
+</script>
+<script>
+function renderLoja(){
+  document.getElementById('moedas-loja-num').textContent=moedas;
+  const gs=document.getElementById('grade-skins');gs.innerHTML='';
+  SKINS.forEach(s=>{const comp=skinsCompradas.includes(s.id),sel=skinAtual.id===s.id;const div=document.createElement('div');div.className='item-loja'+(sel?' selecionado':comp?' comprado':'');div.innerHTML='<div class="preview">'+s.emoji+'</div><div class="nome-item">'+s.nome+'</div><div class="preco">'+(s.preco===0?'Grátis':'🪙 '+s.preco)+'</div><div class="status">'+(sel?'✓ Equipado':comp?'Comprado':'')+'</div>';div.addEventListener('click',()=>comprarOuEquipar('skin',s.id));gs.appendChild(div);});
+  const gf=document.getElementById('grade-fundos');gf.innerHTML='';
+  FUNDOS.forEach(f=>{const comp=fundosComprados.includes(f.id),sel=fundoAtual.id===f.id;const div=document.createElement('div');div.className='item-loja'+(sel?' selecionado':comp?' comprado':'');div.innerHTML='<div class="preview" style="background:'+f.fundo+';border-radius:8px;padding:4px">'+f.emoji+'</div><div class="nome-item">'+f.nome+'</div><div class="preco">'+(f.preco===0?'Grátis':'🪙 '+f.preco)+'</div><div class="status">'+(sel?'✓ Ativo':comp?'Comprado':'')+'</div>';div.addEventListener('click',()=>comprarOuEquipar('fundo',f.id));gf.appendChild(div);});
+  const gi=document.getElementById('grade-itens');gi.innerHTML='';
+  ITENS_LOJA.forEach(item=>{const comp=!!itensComprados[item.id];const div=document.createElement('div');div.className='item-loja'+(comp?' comprado':'');div.innerHTML='<div class="preview">'+item.emoji+'</div><div class="nome-item">'+item.nome+'</div><div class="preco">'+item.desc+'<br>🪙 '+item.preco+'</div><div class="status">'+(comp?'✓ Ativo':'')+'</div>';div.addEventListener('click',()=>comprarItem(item));gi.appendChild(div);});
+}
+function comprarOuEquipar(tipo,id){
+  if(tipo==='skin'){const s=SKINS.find(x=>x.id===id);if(!s)return;if(!skinsCompradas.includes(id)){if(moedas<s.preco){alertMoedas();return;}moedas-=s.preco;skinsCompradas.push(id);}skinAtual=s;}
+  else{const f=FUNDOS.find(x=>x.id===id);if(!f)return;if(!fundosComprados.includes(id)){if(moedas<f.preco){alertMoedas();return;}moedas-=f.preco;fundosComprados.push(id);}fundoAtual=f;}
+  salvar();atualizarHUD();renderLoja();
+}
+function comprarItem(item){
+  if(item.id==='vida_extra'){if(moedas<item.preco){alertMoedas();return;}moedas-=item.preco;vidasExtras++;salvar();atualizarHUD();renderLoja();return;}
+  if(itensComprados[item.id])return;
+  if(moedas<item.preco){alertMoedas();return;}
+  moedas-=item.preco;itensComprados[item.id]=true;salvar();atualizarHUD();renderLoja();
+}
+function alertMoedas(){ovSub.textContent='❌ Moedas insuficientes!';setTimeout(()=>{ovSub.textContent='';},2000);}
+function renderConfig(){
+  document.querySelectorAll('.btn-opcao').forEach(b=>b.classList.toggle('ativo',config[b.dataset.config]===b.dataset.val));
+  ['sons','musica','vibrar','paredes'].forEach(k=>document.getElementById('toggle-'+k).classList.toggle('on',config[k]));
+  atualizarControles();
+}
+document.querySelectorAll('.btn-opcao').forEach(b=>{b.addEventListener('click',()=>{config[b.dataset.config]=b.dataset.val;salvar();renderConfig();});});
+['sons','musica','vibrar','paredes'].forEach(key=>{document.getElementById('toggle-'+key).addEventListener('click',()=>{config[key]=!config[key];if(key==='musica'){if(config.musica&&emJogo&&!pausado)iniciarMusica();else pararMusica();}salvar();renderConfig();});});
+function atualizarControles(){const t=config.controle;document.getElementById('controles').style.display=t==='botoes'?'grid':'none';document.getElementById('joystick-wrap').style.display=t==='joystick'?'block':'none';}
+function iniciar(){
+  const meio=Math.floor(COLS/2);
+  cobra=[{x:meio,y:meio},{x:meio-1,y:meio},{x:meio-2,y:meio}];
+  dir={x:0,y:0};prox={x:0,y:0};pts=0;nivel=1;nivelPts=0;
+  velocidade=VEL_BASE;imanAtivo=!!itensComprados.iman;comidaOuro=null;
+  atualizarHUD();atualizarNivel();
+  overlay.style.display='none';aguardandoInicio=true;pausado=false;emJogo=true;
+  novaComida();desenhar();
+  if(loop)clearInterval(loop);
+  loop=setInterval(tick,velocidade);
+  if(config.musica)iniciarMusica();
+}
+function tick(){
+  if(pausado||aguardandoInicio)return;
+  cobraAnterior=cobra.map(p=>({...p}));comidaAnterior={...comida};comidaOuroAnterior=comidaOuro?{...comidaOuro}:null;
+  dir={...prox};
+  if(dir.x===0&&dir.y===0)return;
+  const cab={x:cobra[0].x+dir.x,y:cobra[0].y+dir.y};
+  if(!config.paredes){if(cab.x<0||cab.x>=COLS||cab.y<0||cab.y>=COLS)return fim();}
+  else{cab.x=(cab.x+COLS)%COLS;cab.y=(cab.y+COLS)%COLS;}
+  if(cobra.some(p=>p.x===cab.x&&p.y===cab.y))return fim();
+  cobra.unshift(cab);let cresceu=false;
+  if(cab.x===comida.x&&cab.y===comida.y){cresceu=true;pts+=10;moedas+=1+(imanAtivo?1:0);somComer();vibrar(30);novaComida();atualizarVelocidade();verificarNivel();}
+  if(comidaOuro&&cab.x===comidaOuro.x&&cab.y===comidaOuro.y){cresceu=true;pts+=30;moedas+=3;somComidaOuro();vibrar(50);comidaOuro=null;atualizarVelocidade();verificarNivel();}
+  if(!cresceu)cobra.pop();
+  if(!comidaOuro&&Math.random()<0.008){novaComidaOuro();somFrutaAparece();}
+  ptsEl.textContent=pts;
+  if(pts>recorde){recorde=pts;recEl.textContent=recorde;}
+  moeEl.textContent='🪙'+moedas;
+  desenhar();
+}
+function atualizarVelocidade(){const novaVel=Math.max(VEL_MIN,VEL_BASE-cobra.length*VEL_STEP);if(novaVel!==velocidade){velocidade=novaVel;clearInterval(loop);loop=setInterval(tick,velocidade);}}
+function verificarNivel(){nivelPts+=10;if(nivelPts>=PONTOS_NIVEL){nivel++;nivelPts=0;moedas+=5;somNivelUp();vibrar([100,50,100]);moeEl.textContent='🪙'+moedas;}atualizarNivel();}
+function novaComida(){let pos;do{pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*COLS)};}while(cobra.some(p=>p.x===pos.x&&p.y===pos.y));comida=pos;}
+function novaComidaOuro(){let pos,t=0;do{pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*COLS)};t++;}while(t<50&&(cobra.some(p=>p.x===pos.x&&p.y===pos.y)||(pos.x===comida.x&&pos.y===comida.y)));comidaOuro=pos;setTimeout(()=>{comidaOuro=null;},8000);}
+function desenhar(){
+  const{fundo,grade}=fundoAtual;
+  ctx.fillStyle=fundo;ctx.fillRect(0,0,SIZE,SIZE);
+  ctx.strokeStyle=grade;ctx.lineWidth=0.5;
+  for(let i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*GRID,0);ctx.lineTo(i*GRID,SIZE);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*GRID);ctx.lineTo(SIZE,i*GRID);ctx.stroke();}
+  if(comida){const cx=comida.x*GRID+GRID/2,cy=comida.y*GRID+GRID/2,p=1+Math.sin(Date.now()/200)*.08;ctx.save();ctx.translate(cx,cy);ctx.scale(p,p);ctx.translate(-cx,-cy);ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(cx,cy,GRID/2-2,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.arc(cx-2,cy-2,3,0,Math.PI*2);ctx.fill();ctx.restore();}
+  if(comidaOuro){const cx=comidaOuro.x*GRID+GRID/2,cy=comidaOuro.y*GRID+GRID/2,p=1+Math.sin(Date.now()/150)*.12;ctx.save();ctx.translate(cx,cy);ctx.scale(p,p);ctx.translate(-cx,-cy);ctx.fillStyle='#fbbf24';ctx.shadowColor='#fbbf24';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(cx,cy,GRID/2-1,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='white';ctx.beginPath();ctx.arc(cx-2,cy-3,3,0,Math.PI*2);ctx.fill();ctx.restore();}
+  cobra.forEach((p,i)=>{const x=p.x*GRID+1,y=p.y*GRID+1,w=GRID-2,t=i/cobra.length;ctx.fillStyle=i===0?skinAtual.cabeca:skinAtual.corpo(t);ctx.beginPath();ctx.roundRect(x,y,w,w,4);ctx.fill();if(i===0){ctx.fillStyle='#0f172a';const ox=p.x*GRID,oy=p.y*GRID;if(dir.x===0&&dir.y===0){ctx.beginPath();ctx.arc(ox+5,oy+7,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(ox+13,oy+7,2,0,Math.PI*2);ctx.fill();}else{const e1x=dir.x===1?ox+13:dir.x===-1?ox+4:ox+5,e1y=dir.y===1?oy+13:dir.y===-1?oy+4:oy+5;const e2x=dir.x===1?ox+13:dir.x===-1?ox+4:ox+13,e2y=dir.y===1?oy+13:dir.y===-1?oy+4:oy+13;ctx.beginPath();ctx.arc(e1x,e1y,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(e2x,e2y,2,0,Math.PI*2);ctx.fill();}}});
+  if(vidasExtras>0){ctx.font='13px sans-serif';for(let i=0;i<Math.min(vidasExtras,3);i++)ctx.fillText('💖',4+i*18,SIZE-4);}
+}
+function fim(){
+  clearInterval(loop);emJogo=false;pararMusica();somGameOver();vibrar([200,100,200]);salvar();
+  ovTitulo.textContent='💀 Fim de jogo!';ovSub.textContent='';
+  ovPts.textContent=pts+' pontos';ovPtsWrap.style.display='block';
+  countdown.style.display='none';btnJogar.textContent='🔄 Jogar de novo';overlay.style.display='flex';
+  if(vidasExtras>0||moedas>=CUSTO_VIDA_EXTRA){btnVida.textContent='💖 USAR VIDA EXTRA ('+(vidasExtras>0?'vida estocada':CUSTO_VIDA_EXTRA+'🪙')+')';btnVida.classList.remove('escondido');setTimeout(()=>btnVida.classList.add('escondido'),5000);}
+  else btnVida.classList.add('escondido');
+}
+btnVida.addEventListener('click',()=>{
+  if(!cobraAnterior)return;
+  if(vidasExtras>0)vidasExtras--;else if(moedas>=CUSTO_VIDA_EXTRA)moedas-=CUSTO_VIDA_EXTRA;else return;
+  cobra=cobraAnterior;comida=comidaAnterior;comidaOuro=comidaOuroAnterior;
+  prox={x:0,y:0};dir={x:0,y:0};aguardandoInicio=true;emJogo=true;
+  somVidaExtra();moeEl.textContent='🪙'+moedas;
+  ovTitulo.textContent='💖 Continue!';ovSub.textContent='Faça seu próximo movimento';
+  ovPtsWrap.style.display='none';btnVida.classList.add('escondido');overlay.style.display='none';
+  loop=setInterval(tick,velocidade);if(config.musica)iniciarMusica();salvar();
+});
+document.getElementById('btn-pausar').addEventListener('click',()=>{
+  if(!emJogo)return;pausado=!pausado;
+  document.getElementById('btn-pausar').textContent=pausado?'▶':'⏸';somPausa();
+  if(pausado){pararMusica();ovTitulo.textContent='⏸ Pausado';ovSub.textContent='Toque em ▶ para continuar';ovPtsWrap.style.display='none';btnJogar.style.display='none';btnVida.classList.add('escondido');overlay.style.display='flex';}
+  else{overlay.style.display='none';btnJogar.style.display='';if(config.musica)iniciarMusica();}
+});
+function contarEIniciar(){
+  overlay.style.display='flex';btnJogar.style.display='none';ovPtsWrap.style.display='none';ovSub.textContent='';countdown.style.display='block';btnVida.classList.add('escondido');let n=3;
+  function proxNum(){if(n>0){countdown.textContent=n--;ovTitulo.textContent='🐍 Prepare-se!';tocar(440+(3-n)*110,'sine',.1,.2);setTimeout(proxNum,700);}else{countdown.textContent='GO!';tocar(880,'sine',.15,.3);setTimeout(()=>{overlay.style.display='none';countdown.style.display='none';btnJogar.style.display='';iniciar();},500);}}
+  proxNum();
+}
+btnJogar.addEventListener('click',()=>{if(pausado){document.getElementById('btn-pausar').click();return;}getAudio();contarEIniciar();});
+function mover(nx,ny){if(!emJogo)return;if(dir.x!==0||dir.y!==0){if(nx===-dir.x&&ny===-dir.y)return;}prox={x:nx,y:ny};if(aguardandoInicio)aguardandoInicio=false;}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowUp'){e.preventDefault();mover(0,-1);}if(e.key==='ArrowDown'){e.preventDefault();mover(0,1);}if(e.key==='ArrowLeft'){e.preventDefault();mover(-1,0);}if(e.key==='ArrowRight'){e.preventDefault();mover(1,0);}if(e.key===' '){e.preventDefault();document.getElementById('btn-pausar').click();}});
+function addBtn(id,nx,ny){const el=document.getElementById(id);el.addEventListener('touchstart',e=>{e.preventDefault();mover(nx,ny);el.classList.add('pressionado');},{passive:false});el.addEventListener('touchend',()=>el.classList.remove('pressionado'));el.addEventListener('click',()=>mover(nx,ny));}
+addBtn('bc',0,-1);addBtn('bb',0,1);addBtn('be',-1,0);addBtn('bd',1,0);
+let touchX=0,touchY=0;
+canvas.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;e.preventDefault();},{passive:false});
+canvas.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-touchX,dy=e.changedTouches[0].clientY-touchY;if(Math.abs(dx)<20&&Math.abs(dy)<20)return;if(Math.abs(dx)>Math.abs(dy))mover(dx>0?1:-1,0);else mover(0,dy>0?1:-1);e.preventDefault();},{passive:false});
+const joystickWrap=document.getElementById('joystick-wrap'),joystickThumb=document.getElementById('joystick-thumb');
+let jsAtivo=false,jsCX=0,jsCY=0;
+joystickWrap.addEventListener('touchstart',e=>{e.preventDefault();jsAtivo=true;const r=joystickWrap.getBoundingClientRect();jsCX=r.left+r.width/2;jsCY=r.top+r.height/2;},{passive:false});
+joystickWrap.addEventListener('touchmove',e=>{e.preventDefault();if(!jsAtivo)return;const t=e.touches[0];let dx=t.clientX-jsCX,dy=t.clientY-jsCY;const dist=Math.sqrt(dx*dx+dy*dy);if(dist>60){dx=dx/dist*60;dy=dy/dist*60;}joystickThumb.style.left=(60+dx-30)+'px';joystickThumb.style.top=(60+dy-30)+'px';if(dist>15){if(Math.abs(dx)>Math.abs(dy))mover(dx>0?1:-1,0);else mover(0,dy>0?1:-1);}},{passive:false});
+joystickWrap.addEventListener('touchend',()=>{jsAtivo=false;joystickThumb.style.left='50px';joystickThumb.style.top='50px';});
+function vibrar(p){if(config.vibrar&&navigator.vibrate)navigator.vibrate(p);}
+function animLoop(){if(emJogo&&!pausado&&!aguardandoInicio)desenhar();requestAnimationFrame(animLoop);}
+animLoop();
+ctx.fillStyle='#0f172a';ctx.fillRect(0,0,SIZE,SIZE);
+ovTitulo.textContent='🐍 Cobrinha';ovSub.textContent='Pronto para jogar?';
+ovPtsWrap.style.display='none';countdown.style.display='none';btnVida.classList.add('escondido');
+mostrarNav(false);carregar();
+if(nomeJogador){mostrarTela('tela-jogo');mostrarNav(true);nomeEl.textContent=nomeJogador;recEl.textContent=recorde;atualizarHUD();atualizarControles();document.getElementById('input-nome').value=nomeJogador;}
+else{mostrarTela('tela-inicio');}
+</script>
 </body>
 </html>
